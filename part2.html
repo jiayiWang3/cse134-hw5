@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!-- <button id="button" type="submit">hello</button> -->
+    <weather-widget>Current Weather Conditions Unavailable</weather-widget>
+    <script type="module">
+        class WeatherWidget extends HTMLElement {
+            constructor() {
+                super();
+
+                let shadowRoot = this.attachShadow({mode: 'open'});
+                let style = document.createElement('style');
+                style.innerHTML = `        
+                    img {
+                        width: 40px;
+                    }
+
+                    p {
+                        display: inline-block;
+                        font-size: 20px;
+                        margin-left: 20px;
+                        line-height: 40px;
+                    }`;
+                this.shadowRoot.appendChild(style);
+
+                let title = document.createElement('h3');
+                title.innerHTML = 'Current Weather';
+                this.shadowRoot.appendChild(title);
+
+                let display = document.createElement('div');
+
+                let image = document.createElement('img');
+                image.alt = 'icon of weather';
+                display.appendChild(image);
+
+                let sentence = document.createElement('p');
+                sentence.innerHTML = '';
+                display.appendChild(sentence);
+
+                this.shadowRoot.appendChild(display);
+
+                let lat = '32.87083';
+                let lon = '-117.25083';
+
+                fetch(`https://api.weather.gov/points/${lat},${lon}`, {
+                    method: 'GET',
+                }).then(response => {
+                    return response.json();
+                }).then(data => {
+                    console.log(data);
+                    fetch(data.properties.forecast, {
+                        method: 'GET'
+                    }).then(response => {
+                        return response.json();
+                    }).then(data1 => {
+                        console.log(data1);
+                        let curWeather = data1.properties.periods[0];
+                        // console.log(curWeather);
+                        let temperature = curWeather.temperature;
+                        let temperatureUnit = curWeather.temperatureUnit;
+                        let description = curWeather.shortForecast;
+                        console.log(temperature);
+                        console.log(temperatureUnit);
+                        console.log(description);
+                        sentence.innerHTML = `${temperature}&deg;${temperatureUnit}`;
+                        if (description.includes("Clear")) {
+                            image.src='icons/clear_icon.png';
+                        } else if (description.includes("Sunny")) {
+                            // Clear, Mostly Sunny, Mostly Clear, Sunny, Partly Cloudy, Mostly Cloudy, 
+                            image.src='icons/sunny_icon.png';
+                        } else if (description.includes("Cloudy")) {
+                            image.src='icons/cloudy_icon.png';
+                        } else if (description.includes("Rainy")) {
+                            image.src='icons/rain_icon.png';
+                        }
+                    }).catch(err => {
+                        sentence.innerHTML = 'There exits some error while fetching data';
+                    })
+                }).catch(err => {
+                    sentence.innerHTML = 'There exits some error while fetching data';
+                })
+            }
+        }
+        customElements.define('weather-widget', WeatherWidget);
+
+    </script>
+</body>
+</html>

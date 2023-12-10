@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        :root {
+            --star-color: gray;
+            --selected-star-color: greenyellow;
+        }
+    </style>
+</head>
+<body>
+    <rating-widget>
+        <form action="https://httpbin.org/post" method="POST">
+            <label for="rating">How satisfied are you?</label>
+            <input type="hidden" name="question" value="How satisfied are you?">
+            <input type="hidden" name="sentBy" value="HTML">
+            <input type="number" id="rating" name="rating" min="1" max="5" value="0" required>
+            <button type="submit">Submit</button>
+        </form>
+    </rating-widget>
+    <!-- <script src="scripts/rating_weidget.js"></script> -->
+
+
+
+
+    <script type="module">
+        class RatingWidget extends HTMLElement {
+            constructor() {
+                super();
+                let shadowRoot = this.attachShadow({mode: 'open'});
+
+                let p_ = document.createElement('h3');
+                p_.innerHTML = 'Rating Widget';
+                this.shadowRoot.appendChild(p_);
+
+                let total = document.getElementById('rating').getAttribute('max');
+                total = Math.max(3, total);
+                total = Math.min(total, 10);
+
+                let style = document.createElement('style');
+                style.innerHTML = `        
+                .star {
+                    color: var(--star-color, gray);
+                    font-size: 200%;
+                    cursor: pointer;
+                }
+                .selected {
+                    color: var(--selected-star-color, red);
+                }`;
+                this.shadowRoot.appendChild(style);
+
+                let div_ = document.createElement('div');
+                div_.classList.add('star');
+
+
+                for (let id = 0; id < total; id++) {
+                    let curStar = document.createElement('span');
+                    curStar.innerHTML = '&#9733';
+                    curStar.addEventListener('mouseover', () => {
+                        showTheStar(id);
+                    });
+                    curStar.addEventListener('mouseout', () => {
+                        showTheStar(-1);
+                    })
+                    curStar.addEventListener('click', () => {
+                        submitForm(id);
+                    })
+                    div_.appendChild(curStar);
+                }
+                this.shadowRoot.appendChild(div_);
+
+                function showTheStar(id) {
+                    const list = div_.querySelectorAll('span');
+                    for (let i = 0; i <= id; i++) {
+                        list[i].classList.add('selected');
+                    }
+                    for (let i = id + 1; i < total; i++) {
+                        list[i].classList.remove('selected');
+                    }
+                }
+
+                function submitForm(id) {
+                    let count = id + 1;
+                    let p_element = document.createElement("p");
+                    if (count / total >= 0.8) {
+                        p_element.innerHTML = `Thanks for ${count} star rating!`;
+                    } else {
+                        p_element.innerHTML = `Thanks for your feedback of ${count} stars. We'll try to do better`;
+                    }
+                    document.body.appendChild(p_element);
+
+                    const formData = new FormData();
+                    formData.append('question', 'How satisfied are you?');
+                    formData.append('rating', `${count}`);
+                    formData.append('sentBy', 'JS');
+                    const header_ = new Headers({
+                        'X-Sent-By': 'JS'
+                    });
+                    fetch('https://httpbin.org/post', {
+                        method: 'POST',
+                        headers: header_,
+                        body: formData
+                    }).then((response) => {
+                        return response.json();
+                    }).then((data) => {
+                        console.log(data);
+                    }).catch((err) => {
+                        console.log(err);
+                    })
+
+                }
+
+            }
+
+        }
+        customElements.define('rating-widget', RatingWidget);
+
+    </script>
+</body>
+</html>
